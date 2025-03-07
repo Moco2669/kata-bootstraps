@@ -18,6 +18,11 @@ public class Grid
 
     public void AddObstacle(int posX, int posY)
     {
-        obstacles.TryAdd((posY, posY), true);
+        obstacles.TryAdd((posX, posY), true);
+    }
+
+    public bool IsObstacle(int posX, int posY)
+    {
+        return obstacles.ContainsKey((posX, posY));
     }
 }

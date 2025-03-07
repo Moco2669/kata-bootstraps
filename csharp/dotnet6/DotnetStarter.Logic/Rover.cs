@@ -1,20 +1,24 @@
 using System;
 using System.Runtime.CompilerServices;
+using DotnetStarter.Logic.Enums;
 
 namespace DotnetStarter.Logic;
 
 public class Rover
 {
-    private int pos_x;
-    private int pos_y;
-    private int facing;
-    private string report;
+    private int _posX;
+    private int _posY;
+    private DirectionController _directionController;
+    private GridAccessController _grid;
+    private bool _facingObstacle;
+    private string _report;
 
     public Rover(Grid grid)
     {
-        pos_x = 0;
-        pos_y = 0;
-        facing = 0;
+        _posX = 0;
+        _posY = 0;
+        _directionController = new();
+        _grid = new(grid);
         UpdateReport();
     }
     
@@ -24,84 +28,53 @@ public class Rover
         {
             if (command is 'M')
             {
-                Move();
+                (int nextX, int nextY) = GetNextPoint();
+                _facingObstacle = _grid.IsPointAnObstacle(nextX, nextY);
+                if (!_facingObstacle)
+                {
+                    Move(nextX, nextY);
+                }
+                else break;
             }
-            else if (command is 'L' or 'R')
-            {
-                Rotate(command);
-            }
+            else if (command is 'L' or 'R') Rotate(command);
         }
-        
         UpdateReport();
+    }
+
+    private (int, int) GetNextPoint()
+    {
+        (int incrementX, int incrementY) = _directionController.GetFacingAsCoordinates();
+        return (_posX + incrementX, _posY + incrementY);
     }
 
     public string GetReport()
     {
-        return report;
+        return _report;
     }
 
-    private void Move()
+    private void Move(int posX, int posY)
     {
-        switch (facing)
-        {
-            case 0:
-                ++pos_y;
-                break;
-            case 1:
-                ++pos_x;
-                break;
-            case 2:
-                --pos_y;
-                break;
-            case 3:
-                --pos_x;
-                break;
-        }
+        _posX = posX;
+        _posY = posY;
     }
     private void Rotate(char direction)
     {
-        if (direction is 'L')
-        {
-            --facing;
-            if (facing < 0)
-            {
-                facing = 3;
-            }
-        }
-        else if (direction is 'R')
-        {
-            ++facing;
-            if (facing > 3)
-            {
-                facing = 0;
-            }
-        }
+        if(direction is 'L') _directionController.TurnLeft();
+        if(direction is 'R') _directionController.TurnRight();
     }
 
     private void UpdateReport()
     {
-        report = "";
-        report += pos_x;
-        report += ':';
-        report += pos_y;
-        report += ':';
-        string facingChar = "";
-        switch (facing)
+        _report = "";
+        if (_facingObstacle)
         {
-            case 0:
-                facingChar = "N";
-                break;
-            case 1:
-                facingChar = "E";
-                break;
-            case 2:
-                facingChar = "S";
-                break;
-            case 3:
-                facingChar = "W";
-                break;
+            _report += 'O';
+            _report += ':';
         }
-
-        report += facingChar;
+        _report += _posX;
+        _report += ':';
+        _report += _posY;
+        _report += ':';
+        _report += _directionController.GetFacing();
     }
 }
